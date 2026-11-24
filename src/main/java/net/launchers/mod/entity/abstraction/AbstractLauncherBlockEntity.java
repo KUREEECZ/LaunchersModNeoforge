@@ -1,29 +1,25 @@
 package net.launchers.mod.entity.abstraction;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractLauncherBlockEntity extends BlockEntity {
-    private final VoxelShape RETRACTED_BASE_SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
-    private final VoxelShape EXTENDED_BASE_SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
-    private final VoxelShape SHORT_EXTENDER_SHAPE = Block.createCuboidShape(6.0D, 2.0D, 6.0D, 10.0D, 10.0D, 10.0D);
-    private final VoxelShape LONG_EXTENDER_SHAPE = Block.createCuboidShape(6.0D, 0.0D, 6.0D, 10.0D, 16.0D, 10.0D);
-    private final VoxelShape HEAD_SHAPE = Block.createCuboidShape(0.0D, 12.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    private final VoxelShape RETRACTED_BASE_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    private final VoxelShape EXTENDED_BASE_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
+    private final VoxelShape SHORT_EXTENDER_SHAPE = Block.box(6.0D, 2.0D, 6.0D, 10.0D, 10.0D, 10.0D);
+    private final VoxelShape LONG_EXTENDER_SHAPE = Block.box(6.0D, 0.0D, 6.0D, 10.0D, 16.0D, 10.0D);
+    private final VoxelShape HEAD_SHAPE = Block.box(0.0D, 12.0D, 0.0D, 16.0D, 16.0D, 16.0D);
     private final float extensionStride = 1F; // 1/stride ticks per move
     private final float retractingStride = extensionStride / 4;
     private final int retractingDelay = 2;
@@ -42,7 +38,7 @@ public abstract class AbstractLauncherBlockEntity extends BlockEntity {
     }
 
 
-    public static void tick(World world, BlockPos pos, BlockState state, AbstractLauncherBlockEntity be) {
+    public static void tick(Level world, BlockPos pos, BlockState state, AbstractLauncherBlockEntity be) {
         switch (be.launcherState) {
             case EXTENDED:
                 be.currentTick++;
@@ -89,13 +85,13 @@ public abstract class AbstractLauncherBlockEntity extends BlockEntity {
 
     @Nullable
     @Override
-    public Packet<ClientPlayPacketListener> toUpdatePacket() {
-        return BlockEntityUpdateS2CPacket.create(this);
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
-        return createNbt(registryLookup);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup) {
+        return saveWithoutMetadata(registryLookup);
     }
 
     public VoxelShape getCollisionShape() {
@@ -108,39 +104,38 @@ public abstract class AbstractLauncherBlockEntity extends BlockEntity {
             baseShape = EXTENDED_BASE_SHAPE;
             VoxelShape extenderShape = null;
             if (progress < 0.35) {
-                extenderShape = VoxelShapes.union(baseShape, SHORT_EXTENDER_SHAPE.offset(0, progress - 0.25, 0));
+                extenderShape = Shapes.or(baseShape, SHORT_EXTENDER_SHAPE.move(0, progress - 0.25, 0));
             }
             else {
-                extenderShape = VoxelShapes.union(baseShape, LONG_EXTENDER_SHAPE.offset(0, progress - 0.25F, 0));
+                extenderShape = Shapes.or(baseShape, LONG_EXTENDER_SHAPE.move(0, progress - 0.25F, 0));
             }
-            return VoxelShapes.union(extenderShape, HEAD_SHAPE.offset(0, progress, 0));
+            return Shapes.or(extenderShape, HEAD_SHAPE.move(0, progress, 0));
         }
     }
 
-    @Environment(EnvType.CLIENT)
     public float getDeltaProgress(float tickDelta) {
         if (tickDelta > 1.0F) {
             tickDelta = 1.0F;
         }
-        return MathHelper.lerp(tickDelta, this.lastProgress, this.progress);
+        return Mth.lerp(tickDelta, this.lastProgress, this.progress);
     }
 
     public void startExtending() {
         extending = true;
         launcherState = LauncherState.MOVING;
         progress = 0;
-        world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), Block.NOTIFY_LISTENERS);
+        level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), Block.UPDATE_CLIENTS);
     }
 
     public void startRetracting() {
         extending = false;
         launcherState = LauncherState.MOVING;
-        world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), Block.NOTIFY_LISTENERS);
+        level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), Block.UPDATE_CLIENTS);
     }
 
     @Override
-    protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.readNbt(nbt, registryLookup);
+    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
+        super.loadAdditional(nbt, registryLookup);
         this.currentTick = nbt.getInt("currentTick");
         this.progress = nbt.getFloat("progress");
         this.lastProgress = this.progress;
@@ -149,12 +144,12 @@ public abstract class AbstractLauncherBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
         nbt.putInt("currentTick", currentTick);
         nbt.putFloat("progress", this.lastProgress);
         nbt.putBoolean("extending", this.extending);
         nbt.putInt("launcherState", launcherState.ordinal());
-        super.writeNbt(nbt, registryLookup);
+        super.saveAdditional(nbt, registryLookup);
     }
 
 

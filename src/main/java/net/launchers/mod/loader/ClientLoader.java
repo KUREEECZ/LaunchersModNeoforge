@@ -1,27 +1,23 @@
 package net.launchers.mod.loader;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.launchers.mod.entity_renderer.ExtremeLauncherBlockEntityRenderer;
 import net.launchers.mod.entity_renderer.LauncherBlockEntityRenderer;
 import net.launchers.mod.entity_renderer.PoweredLauncherBlockEntityRenderer;
 import net.launchers.mod.entity_renderer.UltimateLauncherBlockEntityRenderer;
-import net.launchers.mod.network.packet.UnboundedEntityVelocityPayload;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 import static net.launchers.mod.initializer.LMEntities.*;
 
-public final class ClientLoader implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        BlockEntityRendererRegistry.register(LAUNCHER_BLOCK_ENTITY, LauncherBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(PW_LAUNCHER_BLOCK_ENTITY, PoweredLauncherBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(EX_LAUNCHER_BLOCK_ENTITY, ExtremeLauncherBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(UL_LAUNCHER_BLOCK_ENTITY, UltimateLauncherBlockEntityRenderer::new);
-        PayloadTypeRegistry.playS2C().register(UnboundedEntityVelocityPayload.ID, UnboundedEntityVelocityPayload.CODEC);
-        ClientPlayNetworking.registerGlobalReceiver(UnboundedEntityVelocityPayload.ID, ((payload, context) -> context.client().execute(() -> {
-            payload.onReceive(context.client());
-        })));
+@EventBusSubscriber(modid = LMLoader.MOD_ID, value = Dist.CLIENT)
+public final class ClientLoader {
+    @SubscribeEvent
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(LAUNCHER_BLOCK_ENTITY.get(), LauncherBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(PW_LAUNCHER_BLOCK_ENTITY.get(), PoweredLauncherBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(EX_LAUNCHER_BLOCK_ENTITY.get(), ExtremeLauncherBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(UL_LAUNCHER_BLOCK_ENTITY.get(), UltimateLauncherBlockEntityRenderer::new);
     }
 }

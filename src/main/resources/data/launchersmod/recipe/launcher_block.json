@@ -6,10 +6,10 @@
     "iRi"
   ],
   "key": {
-    "i": "minecraft:iron_ingot",
-    "P": "minecraft:piston",
-    "T": "minecraft:tnt",
-    "R": "minecraft:redstone"
+    "i": { "item": "minecraft:iron_ingot" },
+    "P": { "item": "minecraft:piston" },
+    "T": { "item": "minecraft:tnt" },
+    "R": { "item": "minecraft:redstone" }
   },
   "result": {
     "id": "launchersmod:launcher_block",

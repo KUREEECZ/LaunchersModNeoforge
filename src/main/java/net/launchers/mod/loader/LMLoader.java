@@ -1,17 +1,20 @@
 package net.launchers.mod.loader;
 
-import net.fabricmc.api.ModInitializer;
 import net.launchers.mod.initializer.*;
+import net.launchers.mod.network.NetworkHandler;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
 
-public final class LMLoader implements ModInitializer {
+@Mod(LMLoader.MOD_ID)
+public final class LMLoader {
     public static final String MOD_ID = "launchersmod";
 
-    @Override
-    public void onInitialize() {
-        LMBlock.initialize();
-        LMEntities.initialize();
-        LMItem.initialize();
-        LMSounds.initialize();
+    public LMLoader(IEventBus modBus) {
+        LMBlock.initialize(modBus);
+        LMEntities.initialize(modBus);
+        LMItem.initialize(modBus);
+        LMSounds.initialize(modBus);
         LMCommands.initialize();
+        modBus.addListener(NetworkHandler::registerPayloads);
     }
 }

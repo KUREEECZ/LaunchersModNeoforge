@@ -6,9 +6,9 @@
     "###"
   ],
   "key": {
-    "P": "minecraft:tnt",
-    "#": "minecraft:gold_ingot",
-    "D": "launchersmod:launcher_block"
+    "P": { "item": "minecraft:tnt" },
+    "#": { "item": "minecraft:gold_ingot" },
+    "D": { "item": "launchersmod:launcher_block" }
   },
   "result": {
     "id": "launchersmod:powered_launcher_block",

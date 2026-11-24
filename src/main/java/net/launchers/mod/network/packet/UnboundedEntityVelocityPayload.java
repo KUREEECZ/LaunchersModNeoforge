@@ -1,49 +1,31 @@
 package net.launchers.mod.network.packet;
 
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.Vec3d;
+import net.launchers.mod.loader.LMLoader;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
-public record UnboundedEntityVelocityPayload(Vec3d velocity, int entityId) implements CustomPayload {
-    public static final CustomPayload.Id<UnboundedEntityVelocityPayload> ID = CustomPayload.id("lmpacket");
-    public static final PacketCodec<PacketByteBuf, UnboundedEntityVelocityPayload> CODEC = PacketCodec.of(UnboundedEntityVelocityPayload::write, UnboundedEntityVelocityPayload::read);
+public record UnboundedEntityVelocityPayload(Vec3 velocity, int entityId) implements CustomPacketPayload {
+    public static final Type<UnboundedEntityVelocityPayload> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(LMLoader.MOD_ID, "lmpacket"));
+    public static final StreamCodec<FriendlyByteBuf, UnboundedEntityVelocityPayload> CODEC = StreamCodec.of((buf, payload) -> payload.write(buf), UnboundedEntityVelocityPayload::read);
 
-    public static UnboundedEntityVelocityPayload read(PacketByteBuf buf) {
+    public static UnboundedEntityVelocityPayload read(FriendlyByteBuf buf) {
         int entityId = buf.readVarInt();
-        Vec3d velocity = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        Vec3 velocity = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
         return new UnboundedEntityVelocityPayload(velocity, entityId);
     }
 
-    public void sendTo(PlayerEntity player) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        write(buf);
-        ServerPlayNetworking.send((ServerPlayerEntity) player, this);
-        //ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, PACKET_ID, buf);
-    }
-
-    public void onReceive(MinecraftClient ctx) {
-        ctx.execute(() -> {
-            Entity targetEntity = ctx.player.getWorld().getEntityById(entityId);
-            targetEntity.setVelocity(velocity);
-        });
-    }
-
-    public void write(PacketByteBuf buf) {
+    public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(entityId);
-        buf.writeDouble(velocity.getX());
-        buf.writeDouble(velocity.getY());
-        buf.writeDouble(velocity.getZ());
+        buf.writeDouble(velocity.x);
+        buf.writeDouble(velocity.y);
+        buf.writeDouble(velocity.z);
     }
 
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

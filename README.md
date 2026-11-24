@@ -20,6 +20,24 @@
 
 ## Introduction
 
+This port targets **Minecraft 1.21.1 with NeoForge 21.1.219+** and requires **Java 21**.
+Launcher behavior, force multipliers, stacking rules, recipes, and `/lcalc` calculations are unchanged.
+
+### Building and development
+
+- Build: `bash gradlew build` (the mod JAR is written to `build/libs/`).
+- Development client: `bash gradlew runClient`.
+- Development dedicated server: `bash gradlew --console=plain runServer` (accepts server console commands such as `op YourMinecraftName`).
+- Regression tests (including recipe loading): `bash gradlew test`.
+
+Install the mod JAR in the `mods` folder of a NeoForge 1.21.1 client/server. Fabric API is not required.
+
+### GitHub builds
+
+Every push to `main` builds and tests the mod. Download the versioned artifact from
+**Actions → Build mod → the successful run → Artifacts**, then extract the ZIP to get the installable JAR.
+The version comes from `mod_version` in `gradle.properties`; the workflow does not change versions or create tags.
+
 Launchers are special blocks that operates similar to a piston but are able to effectively launch
 any game entity towards the direction they are facing.
 

@@ -6,9 +6,9 @@
     "###"
   ],
   "key": {
-    "P": "minecraft:tnt",
-    "#": "minecraft:netherite_scrap",
-    "D": "launchersmod:extreme_launcher_block"
+    "P": { "item": "minecraft:tnt" },
+    "#": { "item": "minecraft:netherite_scrap" },
+    "D": { "item": "launchersmod:extreme_launcher_block" }
   },
   "result": {
     "id": "launchersmod:ultimate_launcher_block",

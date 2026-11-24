@@ -1,35 +1,32 @@
 package net.launchers.mod.initializer;
 
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.launchers.mod.block.ExtremeLauncherBlock;
-import net.launchers.mod.block.LauncherBlock;
-import net.launchers.mod.block.PoweredLauncherBlock;
-import net.launchers.mod.block.UltimateLauncherBlock;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-
-import static net.launchers.mod.initializer.LMBlock.*;
+import net.launchers.mod.loader.LMLoader;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class LMItem {
-    public static void initialize() {
-        var ulLauncher = Registry.register(Registries.ITEM, UltimateLauncherBlock.ID,
-                                           new BlockItem(ULTIMATE_LAUNCHER_BLOCK, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, UltimateLauncherBlock.ID))));
+    private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(LMLoader.MOD_ID);
+    public static final DeferredItem<BlockItem> LAUNCHER = ITEMS.register("launcher_block", () -> new BlockItem(LMBlock.LAUNCHER_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> POWERED_LAUNCHER = ITEMS.register("powered_launcher_block", () -> new BlockItem(LMBlock.POWERED_LAUNCHER_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> EXTREME_LAUNCHER = ITEMS.register("extreme_launcher_block", () -> new BlockItem(LMBlock.EXTREME_LAUNCHER_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> ULTIMATE_LAUNCHER = ITEMS.register("ultimate_launcher_block", () -> new BlockItem(LMBlock.ULTIMATE_LAUNCHER_BLOCK.get(), new Item.Properties()));
 
-        var exLauncher = Registry.register(Registries.ITEM, ExtremeLauncherBlock.ID,
-                                           new BlockItem(EXTREME_LAUNCHER_BLOCK, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, ExtremeLauncherBlock.ID))));
-        var powLauncher = Registry.register(Registries.ITEM, PoweredLauncherBlock.ID,
-                                            new BlockItem(POWERED_LAUNCHER_BLOCK, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, PoweredLauncherBlock.ID))));
-        var launcher = Registry.register(Registries.ITEM, LauncherBlock.ID,
-                                         new BlockItem(LAUNCHER_BLOCK, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, LauncherBlock.ID))));
+    public static void initialize(IEventBus bus) {
+        ITEMS.register(bus);
+        bus.addListener(LMItem::addCreativeTabItems);
+    }
 
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(content -> content.add(launcher));
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(content -> content.add(powLauncher));
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(content -> content.add(exLauncher));
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(content -> content.add(ulLauncher));
+    private static void addCreativeTabItems(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(CreativeModeTabs.REDSTONE_BLOCKS)) {
+            event.accept(LAUNCHER);
+            event.accept(POWERED_LAUNCHER);
+            event.accept(EXTREME_LAUNCHER);
+            event.accept(ULTIMATE_LAUNCHER);
+        }
     }
 }

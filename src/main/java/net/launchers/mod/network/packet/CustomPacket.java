@@ -1,8 +1,8 @@
 package net.launchers.mod.network.packet;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.FriendlyByteBuf;
 
 public abstract class CustomPacket {
 
@@ -10,9 +10,9 @@ public abstract class CustomPacket {
     public CustomPacket() {
     }
 
-    public abstract void sendTo(PlayerEntity player);
+    public abstract void sendTo(Player player);
 
-    protected abstract void onReceive(MinecraftClient ctx);
+    protected abstract void onReceive(Minecraft ctx);
 
-    public abstract void write(PacketByteBuf buf);
+    public abstract void write(FriendlyByteBuf buf);
 }

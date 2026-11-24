@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="GPL-2.0"
+issueTrackerURL="https://github.com/trat-mods/LaunchersMod/issues"
+
+[[mods]]
+modId="launchersmod"
+version="${version}"
+displayName="Launchers"
+displayURL="https://github.com/trat-mods/LaunchersMod/wiki"
+logoFile="assets/launchersmod/icon.png"
+authors="trat"
+description='''Introduces four different Launcher Blocks. Open the wiki for more detail.'''
+
+[[dependencies.launchersmod]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.219,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.launchersmod]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="BOTH"

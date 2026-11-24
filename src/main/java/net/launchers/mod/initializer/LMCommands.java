@@ -5,10 +5,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +26,11 @@ public final class LMCommands {
     private static final String U_LAUNCHER_ID = "u";
 
     public static void initialize() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, environment) -> {
-            Lcalc.define(dispatcher);
-        });
+        NeoForge.EVENT_BUS.addListener(LMCommands::registerCommands);
+    }
+
+    private static void registerCommands(RegisterCommandsEvent event) {
+        Lcalc.define(event.getDispatcher());
     }
 
     private static float getHeightFromForce(float force) {
@@ -35,21 +38,21 @@ public final class LMCommands {
     }
 
     private final static class Lcalc {
-        public static void define(CommandDispatcher<ServerCommandSource> dispatcher) {
+        public static void define(CommandDispatcher<CommandSourceStack> dispatcher) {
             ArrayList<String> launchersList = new ArrayList<>();
-            dispatcher.register(CommandManager.literal("lcalc").then(CommandManager.argument("first", word()).suggests(suggestedStrings()).executes(ctx -> {
+            dispatcher.register(Commands.literal("lcalc").then(Commands.argument("first", word()).suggests(suggestedStrings()).executes(ctx -> {
                 launchersList.add(getString(ctx, "first"));
                 return checkIdsAndPrintForce(launchersList, ctx);
-            }).then(CommandManager.argument("second", word()).suggests(suggestedStrings()).executes(ctx -> {
+            }).then(Commands.argument("second", word()).suggests(suggestedStrings()).executes(ctx -> {
                 launchersList.add(getString(ctx, "first"));
                 launchersList.add(getString(ctx, "second"));
                 return checkIdsAndPrintForce(launchersList, ctx);
-            }).then(CommandManager.argument("third", word()).suggests(suggestedStrings()).executes(ctx -> {
+            }).then(Commands.argument("third", word()).suggests(suggestedStrings()).executes(ctx -> {
                 launchersList.add(getString(ctx, "first"));
                 launchersList.add(getString(ctx, "second"));
                 launchersList.add(getString(ctx, "third"));
                 return checkIdsAndPrintForce(launchersList, ctx);
-            }).then(CommandManager.argument("fourth", word()).suggests(suggestedStrings()).executes(ctx -> {
+            }).then(Commands.argument("fourth", word()).suggests(suggestedStrings()).executes(ctx -> {
                 launchersList.add(getString(ctx, "first"));
                 launchersList.add(getString(ctx, "second"));
                 launchersList.add(getString(ctx, "third"));
@@ -70,20 +73,20 @@ public final class LMCommands {
 
         private static float getStackForceByLauncherId(String id) {
             return switch (id) {
-                case LAUNCHER_ID -> LMBlock.LAUNCHER_BLOCK.stackMultiplier;
-                case P_LAUNCHER_ID -> LMBlock.POWERED_LAUNCHER_BLOCK.stackMultiplier;
-                case E_LAUNCHER_ID -> LMBlock.EXTREME_LAUNCHER_BLOCK.stackMultiplier;
-                case U_LAUNCHER_ID -> LMBlock.ULTIMATE_LAUNCHER_BLOCK.stackMultiplier;
+                case LAUNCHER_ID -> LMBlock.LAUNCHER_BLOCK.get().stackMultiplier;
+                case P_LAUNCHER_ID -> LMBlock.POWERED_LAUNCHER_BLOCK.get().stackMultiplier;
+                case E_LAUNCHER_ID -> LMBlock.EXTREME_LAUNCHER_BLOCK.get().stackMultiplier;
+                case U_LAUNCHER_ID -> LMBlock.ULTIMATE_LAUNCHER_BLOCK.get().stackMultiplier;
                 default -> 0F;
             };
         }
 
         private static float getBaseForceByLauncherId(String id) {
             return switch (id) {
-                case LAUNCHER_ID -> LMBlock.LAUNCHER_BLOCK.baseMultiplier;
-                case P_LAUNCHER_ID -> LMBlock.POWERED_LAUNCHER_BLOCK.baseMultiplier;
-                case E_LAUNCHER_ID -> LMBlock.EXTREME_LAUNCHER_BLOCK.baseMultiplier;
-                case U_LAUNCHER_ID -> LMBlock.ULTIMATE_LAUNCHER_BLOCK.baseMultiplier;
+                case LAUNCHER_ID -> LMBlock.LAUNCHER_BLOCK.get().baseMultiplier;
+                case P_LAUNCHER_ID -> LMBlock.POWERED_LAUNCHER_BLOCK.get().baseMultiplier;
+                case E_LAUNCHER_ID -> LMBlock.EXTREME_LAUNCHER_BLOCK.get().baseMultiplier;
+                case U_LAUNCHER_ID -> LMBlock.ULTIMATE_LAUNCHER_BLOCK.get().baseMultiplier;
                 default -> 0F;
             };
         }
@@ -97,9 +100,9 @@ public final class LMCommands {
             return base * multipier;
         }
 
-        private static int checkIdsAndPrintForce(ArrayList<String> launchersList, CommandContext<ServerCommandSource> context) {
+        private static int checkIdsAndPrintForce(ArrayList<String> launchersList, CommandContext<CommandSourceStack> context) {
             if (!areLauncherIdValid(launchersList)) {
-                context.getSource().sendFeedback(() -> Text.of("""                                                                       
+                context.getSource().sendSuccess(() -> Component.literal("""
                                                                        One or more parameters are not correct.
                                                                        Usage:
                                                                        l: Launcher
@@ -117,12 +120,12 @@ public final class LMCommands {
             float force = getForce(launchersList);
             printString.append("Force: ").append(force);
             printString.append(", height in blocks (approx): ").append(getHeightFromForce(force));
-            context.getSource().sendFeedback(() -> Text.of(printString.toString()), false);
+            context.getSource().sendSuccess(() -> Component.literal(printString.toString()), false);
             launchersList.clear();
             return 1;
         }
 
-        public static SuggestionProvider<ServerCommandSource> suggestedStrings() {
+        public static SuggestionProvider<CommandSourceStack> suggestedStrings() {
             return (ctx, builder) -> {
                 ArrayList<String> suggestions = new ArrayList<>();
                 try {
