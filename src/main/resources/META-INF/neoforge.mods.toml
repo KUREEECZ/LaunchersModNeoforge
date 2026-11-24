@@ -6,11 +6,14 @@ issueTrackerURL="https://github.com/trat-mods/LaunchersMod/issues"
 [[mods]]
 modId="launchersmod"
 version="${version}"
-displayName="Launchers"
+displayName="Launchers (NeoForge Port)"
 displayURL="https://github.com/trat-mods/LaunchersMod/wiki"
-logoFile="assets/launchersmod/icon.png"
+logoFile="icon.png"
 authors="trat"
-description='''Introduces four different Launcher Blocks. Open the wiki for more detail.'''
+description='''NeoForge port of Launchers Mod for Minecraft 1.21.1.
+
+Introduces four different launcher blocks, preserving the original gameplay logic, launch forces, and stacking rules.
+Original mod by trat. Open the wiki for recipes and more details.'''
 
 [[dependencies.launchersmod]]
 modId="neoforge"

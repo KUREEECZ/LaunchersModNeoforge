@@ -51,6 +51,9 @@ test {
 processResources {
     inputs.property "version", project.version
 
+    // Use the repository icon as the single source for the in-game mod logo.
+    from("icon.png")
+
     filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version
     }
